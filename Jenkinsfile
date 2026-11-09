@@ -17,7 +17,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'master',
-                    url: 'https://github.com/marwaiset/e-commerce.git'
+                    url: 'https://github.com/safazaouali116-droid/e-commerce-1.git'
             }
         }
 
