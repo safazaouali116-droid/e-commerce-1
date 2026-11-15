@@ -3,13 +3,12 @@ pipeline {
     agent any
 
     tools {
-       jdk 'JDK-21'
+        jdk 'JDK-21'
         maven 'Maven-3.9.11'
     }
 
     environment {
         TOMCAT_URL = 'http://localhost:8080'
-        TOMCAT_CREDENTIALS = 'tomcat'
     }
 
     stages {
@@ -35,25 +34,30 @@ pipeline {
 
         stage('Deploy to Tomcat') {
             steps {
-                deploy adapters: [
-                    tomcat9(
-                        credentialsId: "${TOMCAT_CREDENTIALS}",
-                        path: '',
-                        url: "${TOMCAT_URL}"
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'tomcat-credentials',
+                        usernameVariable: 'TOMCAT_USER',
+                        passwordVariable: 'TOMCAT_PASSWORD'
                     )
-                ],
-                contextPath: 'e-commerce',
-                war: 'target/*.war'
+                ]) {
+                    sh '''
+                        curl --fail --silent --show-error \
+                        -u "$TOMCAT_USER:$TOMCAT_PASSWORD" \
+                        --upload-file target/e-commerce.war \
+                        "$TOMCAT_URL/manager/text/deploy?path=/e-commerce&update=true"
+                    '''
+                }
             }
         }
     }
 
     post {
         success {
-            echo '✅ Déploiement réussi sur Tomcat'
+            echo 'Déploiement réussi sur Tomcat'
         }
         failure {
-            echo '❌ Échec de la pipeline'
+            echo 'Échec de la pipeline'
         }
     }
 }
